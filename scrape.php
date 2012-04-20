@@ -269,43 +269,44 @@ function scrape() {
 			if ( is_wp_error( $tmp ) ) {
 				unlink($file_array['tmp_name']);
 				$file_array['tmp_name'] = '';
-				echo "Could not temporarily store attachment " . $tmp->get_error_message() . ": " . print_r( $attachment, true ) . "\n";
+				echo "Could not temporarily store attachment " . $tmp->get_error_message() . ": " . print_r( $tmp, true ) . "\n";
 				exit;
 			}
 
 			// echo "Stored temporarily \n";
 
 			// do the validation and storage stuff
-			$attachment_id = media_handle_sideload( $file_array, $post_id, $attachment[ 'title' ] );
+			$attachment_id = media_handle_sideload( $file_array, $post_id );
 			// echo "Handled sideload \n";
 			// If error storing permanently, unlink
 			if ( is_wp_error($attachment_id) ) {
 				unlink($file_array['tmp_name']);
-				var_dump( $attachment );
-				var_dump( $file_array );
-				var_dump( $attachment_id );
-				wp_delete_post( $post_id, true );
+				// var_dump( $tmp );
+				// var_dump( $file_array );
+				// var_dump( $attachment_id );
+				// wp_delete_post( $post_id, true );
 				echo "Could not permanently store attachment: " . $attachment_id->get_error_message() . "\n";
-				exit;
-			}
-			// echo "Was not an error \n";
-			unset( $scrape_attachment );
-			// echo "Unset attachment \n";
-			if ( ! function_exists( 'has_post_thumbnail' ) ) {
-				echo "Function has_post_thumbnail does not exist! \n";
-				exit;
-			}
-				
-			if ( ! has_post_thumbnail( $post_id ) ) {
-				// echo "Try to set post thumbnail for $post_id as $attachment_id \n";
-				set_post_thumbnail( $post_id, $attachment_id );
+				// exit;
+			} else {
+				if ( ! function_exists( 'has_post_thumbnail' ) ) {
+					echo "Function has_post_thumbnail does not exist! \n";
+					exit;
+				}
+
+				if ( ! has_post_thumbnail( $post_id ) ) {
+					// echo "Try to set post thumbnail for $post_id as $attachment_id \n";
+					set_post_thumbnail( $post_id, $attachment_id );
+				}
+
+				// echo "Set post thumbnail \n";
+
+				foreach ( $plant[ 'taxonomies' ] as $tax => $term_data )
+					wp_set_object_terms( $post_id, $term_data, $tax );
+				// echo "Setup plant " . $plant[ 'latin-name' ] . " \n";
 			}
 
-			// echo "Set post thumbnail \n";
-				
-			foreach ( $plant[ 'taxonomies' ] as $tax => $term_data )
-				wp_set_object_terms( $post_id, $term_data, $tax );
-			// echo "Setup plant " . $plant[ 'latin-name' ] . " \n";
+			unset( $scrape_attachment );
+
 		}
 	}
 
